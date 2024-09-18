@@ -1,2 +1,44 @@
 ﻿@page "/"
+@using PartySaver.Services
+@inject PhotoService PhotoService
 
+
+<InputFile @ref="file" multiple accept="image/png, image/gif, image/jpeg" OnChange="Change" style="@(Uploading ? "display:none;" : "")"></InputFile>
+@if (Uploading)
+{
+    <progress max="@TotalFiles" value="@FilesDone"></progress>
+    <span>Bilder werden hochgeladen. Bitte warten ...</span>
+}
+
+@code {
+
+    InputFile file;
+
+    private bool Uploading;
+    private int TotalFiles;
+    private int FilesDone;
+
+    async Task Change(InputFileChangeEventArgs e)
+    {
+        if (Uploading)
+            return;
+        Uploading = true;
+
+        var files =
+            e.GetMultipleFiles(50).ToList();
+
+        TotalFiles = files.Count;
+
+        foreach (var file in files)
+        {
+            await PhotoService.AddPhoto(file.OpenReadStream(maxAllowedSize: 5000000000), file.Name, "gherd");
+            FilesDone++;
+            StateHasChanged();
+            
+        }
+
+        Uploading = false;
+    }
+
+
+}
